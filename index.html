@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0B0D12">
+<title>LUNARPACE</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">LUNARPACE</div>
+  <div class="top-right">
+    <span id="streak" class="streak" title="days in a row">🔥 0</span>
+  </div>
+</header>
+
+<!-- MOON STAGE -->
+<section class="moon-stage" aria-label="Today's moon">
+  <svg id="moon-svg" viewBox="0 0 200 200" width="220" height="220" role="img" aria-label="Moon phase">
+    <defs>
+      <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="6" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <mask id="terminator-mask">
+        <rect x="0" y="0" width="200" height="200" fill="black"/>
+        <circle cx="100" cy="100" r="80" fill="white"/>
+      </mask>
+    </defs>
+    <g id="moon-group" filter="url(#glow)">
+      <!-- dark base disc -->
+      <circle cx="100" cy="100" r="80" fill="#1a1d24"/>
+      <!-- craters / maria -->
+      <g opacity="0.10" fill="#F4F6F8">
+        <ellipse cx="70" cy="70" rx="14" ry="10"/>
+        <ellipse cx="130" cy="90" rx="10" ry="14"/>
+        <ellipse cx="90" cy="130" rx="16" ry="8"/>
+        <ellipse cx="140" cy="140" rx="8" ry="6"/>
+        <ellipse cx="60" cy="120" rx="6" ry="9"/>
+      </g>
+      <!-- lit portion -->
+      <g id="lit-group" mask="url(#terminator-mask)">
+        <circle cx="100" cy="100" r="80" fill="#F4F6F8"/>
+      </g>
+    </g>
+  </svg>
+</section>
+
+<!-- DATE BLOCK (iOS Notification Center + tear-off calendar inspired) -->
+<section class="date-block" aria-label="Today's date">
+  <div class="date-daynum" id="date-daynum">20</div>
+  <div class="date-weekday" id="date-weekday">TUESDAY</div>
+  <div class="date-monyear" id="date-monyear">OCTOBER 2026</div>
+  <div class="date-lunar" id="date-lunar">Lunar day 5.2 / 29.5</div>
+</section>
+
+<!-- CYCLE CARD -->
+<section class="cycle-card" id="cycle-card" aria-label="Period cycle">
+  <div class="cycle-row">
+    <span class="cycle-dot" aria-hidden="true"></span>
+    <span class="cycle-text" id="cycle-text">Cycle day 12 / 28</span>
+    <span class="cycle-next" id="cycle-next">Next period in ~16 days</span>
+  </div>
+  <div class="cycle-bar" aria-hidden="true">
+    <div class="cycle-fill" id="cycle-fill" style="width:43%"></div>
+  </div>
+</section>
+
+<!-- COMMAND BAR -->
+<form id="cmd-form" class="cmd-bar" autocomplete="off">
+  <input id="cmd-input" type="text" placeholder='type a plan… e.g. "interval run +3d"' aria-label="Command input">
+  <button type="submit" aria-label="Add plan">⏎</button>
+</form>
+
+<!-- TODAY STRIP -->
+<section class="board-section" aria-label="Today">
+  <h2 class="section-title today-title">TODAY <span class="count" id="today-count">0</span></h2>
+  <ul class="plan-list" id="today-list"></ul>
+</section>
+
+<!-- SHELVES -->
+<section class="board-section" aria-label="Soon">
+  <h2 class="section-title shelf-title" data-shelf="short">SOON <span class="horizon">0–7D</span> <span class="count" id="short-count">0</span></h2>
+  <ul class="plan-list" id="short-list"></ul>
+</section>
+
+<section class="board-section" aria-label="Mid">
+  <h2 class="section-title shelf-title" data-shelf="mid">MID <span class="horizon">8–30D</span> <span class="count" id="mid-count">0</span></h2>
+  <ul class="plan-list" id="mid-list"></ul>
+</section>
+
+<section class="board-section" aria-label="Later">
+  <h2 class="section-title shelf-title" data-shelf="long">LATER <span class="horizon">31D+</span> <span class="count" id="long-count">0</span></h2>
+  <ul class="plan-list" id="long-list"></ul>
+</section>
+
+<section class="board-section" aria-label="Anytime">
+  <h2 class="section-title shelf-title" data-shelf="anytime">ANYTIME <span class="count" id="anytime-count">0</span></h2>
+  <ul class="plan-list" id="anytime-list"></ul>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <button id="btn-settings" aria-label="Settings">⚙</button>
+  <button id="btn-export" aria-label="Export data">⇅</button>
+  <button id="btn-help" aria-label="Help">?</button>
+</footer>
+
+<!-- SETTINGS DRAWER -->
+<div id="settings-drawer" class="drawer" hidden>
+  <div class="drawer-panel" role="dialog" aria-label="Settings">
+    <h3>SETTINGS</h3>
+    <label>Short horizon (days)
+      <input type="number" id="set-short" min="1" max="60">
+    </label>
+    <label>Mid horizon (days)
+      <input type="number" id="set-mid" min="2" max="120">
+    </label>
+    <label>Long horizon (days)
+      <input type="number" id="set-long" min="3" max="365">
+    </label>
+    <label>Cycle length (days)
+      <input type="number" id="set-cycle-len" min="10" max="90">
+    </label>
+    <label>Last period start
+      <input type="date" id="set-cycle-start">
+    </label>
+    <div class="drawer-actions">
+      <button id="btn-import">Import</button>
+      <input type="file" id="import-file" accept=".json" hidden>
+      <button id="btn-clear" class="danger">Clear all</button>
+      <button id="btn-close-settings">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- HELP OVERLAY -->
+<div id="help-overlay" class="drawer" hidden>
+  <div class="drawer-panel" role="dialog" aria-label="Help">
+    <h3>CHEAT SHEET</h3>
+    <pre class="help-text">interval run +3d      plan due in 3 days
+@short @mid @long     force horizon
+#word                 add a tag
+done &lt;text&gt;           mark done (fuzzy match)
+drop &lt;text&gt;           delete plan
+/cycle 28 2026-10-09  set cycle length + start
+/help                 show this overlay
+
+No date → ANYTIME shelf.</pre>
+    <button id="btn-close-help">Close</button>
+  </div>
+</div>
+
+<script src="moon.js"></script>
+<script src="store.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
